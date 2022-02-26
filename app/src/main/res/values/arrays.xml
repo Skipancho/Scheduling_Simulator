@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="scheduling_algorithm">
+        <item>FCFS</item>
+        <item>SJF</item>
+        <item>HRN</item>
+        <item>Priority</item>
+        <item>RR</item>
+    </string-array>
+</resources>
