@@ -35,7 +35,7 @@ class GraphAdapter(
         val task = tasks[position]
         val binding = holder.binding as TaskImageBinding
         binding.taskModel = task
-        if (task.name == "idle"){
+        if (task.idx == -1){
             binding.card.setBackgroundColor(Color.WHITE)
         }else {
             binding.card.setBackgroundColor(Colors.colors[task.idx % Colors.size])

@@ -136,11 +136,6 @@
                     android:text="start"
                     android:onClick="@{(v) -> viewModel.start()}"/>
             </RelativeLayout>
-            <TextView
-                android:id="@+id/result_tv"
-                android:layout_width="match_parent"
-                android:layout_height="5dp"
-                android:text="@{viewModel.result}"/>
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/result_rv"
                 android:layout_width="match_parent"
