@@ -20,6 +20,7 @@ class MainViewModel(app : Application) : AndroidViewModel(app) {
     val algorithm = MutableLiveData("")
 
     val result = MutableLiveData("")
+    val result_tasks = mutableListOf<TaskModel>()
 
     fun addTask(){
         val nameText = name.value!!
@@ -33,7 +34,7 @@ class MainViewModel(app : Application) : AndroidViewModel(app) {
 
         val priorityText = if (priority.value == "") 0 else priority.value!!.toInt()
         taskList.add(
-            Task(nameText,arriveTimeText.toInt(),burstTimeText.toInt(),priorityText)
+            Task(nameText,arriveTimeText.toInt(),burstTimeText.toInt(),priorityText,taskList.size)
         )
         navigator?.updateListView()
         name.value=""
@@ -47,7 +48,7 @@ class MainViewModel(app : Application) : AndroidViewModel(app) {
         val arriveT = (Math.random()*10).toInt()
         val burstT = (Math.random()*10).toInt()+1
         val priorityT = (Math.random()*5).toInt()
-        taskList.add(Task(nameT,arriveT,burstT,priorityT))
+        taskList.add(Task(nameT,arriveT,burstT,priorityT,taskList.size))
         navigator?.updateListView()
     }
 
@@ -56,12 +57,14 @@ class MainViewModel(app : Application) : AndroidViewModel(app) {
             toast("작업이 없습니다.")
             return
         }
+        result_tasks.clear()
         navigator?.algorithmCheck()
         toast("${algorithm.value}")
         result.value = ""
         when(algorithm.value){
             "SJF"-> sjf()
         }
+        navigator?.updateGraph()
     }
 
     private fun sjf(){
@@ -80,17 +83,17 @@ class MainViewModel(app : Application) : AndroidViewModel(app) {
                 curTask = readyQ.poll()
             }
             if (curTask != null){
-                text = "$text${curTask.name}"
+                result_tasks.add(TaskModel(curTask.name,runningTime,curTask.idx))
                 curTask.burstTime--
                 if (curTask.burstTime == 0){
                     curTask = null
                 }
             }else{
-                text = "$text(idle)"
+                result_tasks.add(TaskModel("idle",runningTime,-1))
             }
             runningTime++
         }
-
+        result_tasks.add(TaskModel("idle",runningTime,-1))
         result.value = text
         taskList.clear()
     }

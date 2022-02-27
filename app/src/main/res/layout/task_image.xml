@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout
+    xmlns:android="http://schemas.android.com/apk/res/android">
+    <data>
+        <variable
+            name="taskModel"
+            type="com.example.scheduling_simulator.main.TaskModel" />
+    </data>
+<LinearLayout
+    android:layout_width="50dp"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+    <TextView
+        android:id="@+id/card"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:gravity="center"
+        android:text="@{taskModel.name, default=p0}"/>
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="start"
+        android:text="@{taskModel.runningTime, default=0}"/>
+</LinearLayout>
+</layout>
