@@ -74,20 +74,65 @@ class MainViewModel(app : Application) : AndroidViewModel(app) {
         when(algorithm.value){
             "FCFS"->fcfs()
             "SJF"-> sjf()
+            "HRN"-> hrn()
         }
         navigator?.updateGraph()
     }
 
     private fun fcfs(){
+        //first-come, first-service
         val taskQ = PriorityQueue<Task> { o1, o2 -> o1.arriveTime - o2.arriveTime }
         val readyQ = PriorityQueue<Task> { o1, o2 -> o1.arriveTime - o2.arriveTime }
         scheduling(taskQ, readyQ)
     }
 
     private fun sjf(){
+        //shortest job first
         val taskQ = PriorityQueue<Task> { o1, o2 -> o1.arriveTime - o2.arriveTime }
         val readyQ = PriorityQueue<Task> { o1, o2 -> o1.burstTime - o2.burstTime }
         scheduling(taskQ,readyQ)
+    }
+
+    private fun hrn(){
+        //highest response ration-next
+        val taskQ = PriorityQueue<Task> { o1, o2 -> o1.arriveTime - o2.arriveTime }
+        var curTask : Task? = null
+        var runningTime = 0
+        val readyQ = mutableListOf<Task>()
+
+        taskList.forEach { taskQ.add(it.copy())}
+
+        while (taskQ.isNotEmpty() || readyQ.isNotEmpty()||curTask != null){
+            while (taskQ.isNotEmpty() && taskQ.peek()!!.arriveTime <= runningTime){
+                readyQ.add(taskQ.poll()!!)
+            }
+            if (curTask == null && readyQ.isNotEmpty()){
+                readyQ.sortWith{o1,o2 ->
+                    val p1 : Double = (runningTime - o1.arriveTime + o1.burstTime)/o1.burstTime.toDouble()
+                    val p2 : Double = (runningTime - o2.arriveTime + o2.burstTime)/o2.burstTime.toDouble()
+                    when{
+                        p1 > p2 -> -1
+                        p1 == p2 -> 0
+                        else -> 1
+                    }
+                }
+                curTask = readyQ[0]
+                readyQ.removeAt(0)
+            }
+            if (curTask != null){
+                result_tasks.add(TaskModel(curTask.name,runningTime,curTask.idx))
+                curTask.burstTime--
+                if (curTask.burstTime == 0){
+                    curTask = null
+                }
+            }else{
+                result_tasks.add(TaskModel("idle",runningTime,-1))
+            }
+            runningTime++
+        }
+        result_tasks.add(TaskModel("idle",runningTime,-1))
+
+
     }
 
     private fun scheduling(taskQ : PriorityQueue<Task>,readyQ : PriorityQueue<Task>){
