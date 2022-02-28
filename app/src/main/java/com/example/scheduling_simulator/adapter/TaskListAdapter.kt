@@ -33,7 +33,7 @@ class TaskListAdapter(
         v.findViewById<TextView>(R.id.burstTime_tv).text = t.burstTime.toString()
         v.findViewById<TextView>(R.id.priority_tv).text = t.priority.toString()
 
-        /*v.setOnClickListener {
+        v.setOnClickListener {
             val builder = AlertDialog.Builder(context)
             val dialog = builder.setMessage("삭제하시겠습니까?")
                 .setPositiveButton("확인") { _, _ ->
@@ -43,7 +43,7 @@ class TaskListAdapter(
                 .setNegativeButton("취소",null)
                 .create()
             dialog.show()
-        }*/
+        }
         return v
     }
 

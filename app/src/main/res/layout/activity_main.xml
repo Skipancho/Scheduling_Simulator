@@ -28,13 +28,13 @@
                 android:layout_height="50dp"
                 android:layout_marginTop="20dp"
                 android:orientation="horizontal">
-                <EditText
+                <TextView
                     android:id="@+id/name_et"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:gravity="center"
-                    android:text="@={viewModel.name}"
+                    android:text="@{viewModel.name}"
                     android:hint="이름"/>
                 <EditText
                     android:id="@+id/arriveTime_et"
@@ -107,16 +107,22 @@
                 android:id="@+id/task_lv"
                 android:layout_width="match_parent"
                 android:layout_height="200dp"/>
+            <androidx.appcompat.widget.AppCompatButton
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="전체 삭제"
+                android:onClick="@{(v) -> viewModel.clearTasks()}"
+                />
             <RelativeLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
+
                 <Spinner
                     android:id="@+id/spinner"
-                    android:layout_width="150dp"
+                    android:layout_width="wrap_content"
                     android:layout_height="match_parent"
                     android:layout_alignParentStart="true"
-                    android:layout_centerVertical="true"
-                    />
+                    android:layout_centerVertical="true" />
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
