@@ -19,6 +19,8 @@ class MainViewModel(app : Application) : AndroidViewModel(app) {
     val priority = MutableLiveData("")
     val algorithm = MutableLiveData("")
 
+    val timeSlice = MutableLiveData("3")
+
     val result_tasks = mutableListOf<TaskModel>()
 
     private var cnt = 0
@@ -75,6 +77,14 @@ class MainViewModel(app : Application) : AndroidViewModel(app) {
             "FCFS"->fcfs()
             "SJF"-> sjf()
             "HRN"-> hrn()
+            "RR"-> {
+                val timeS = timeSlice.value.toString()
+                if (timeS == "" || timeS.toInt() == 0){
+                    toast("timeslice를 확인해주세요.")
+                    return
+                }
+                rr(timeS.toInt())
+            }
         }
         navigator?.updateGraph()
     }
@@ -112,7 +122,7 @@ class MainViewModel(app : Application) : AndroidViewModel(app) {
                     val p2 : Double = (runningTime - o2.arriveTime + o2.burstTime)/o2.burstTime.toDouble()
                     when{
                         p1 > p2 -> -1
-                        p1 == p2 -> 0
+                        p1 == p2 -> o1.burstTime - o2.burstTime
                         else -> 1
                     }
                 }
@@ -131,8 +141,6 @@ class MainViewModel(app : Application) : AndroidViewModel(app) {
             runningTime++
         }
         result_tasks.add(TaskModel("idle",runningTime,-1))
-
-
     }
 
     private fun scheduling(taskQ : PriorityQueue<Task>,readyQ : PriorityQueue<Task>){
@@ -151,6 +159,40 @@ class MainViewModel(app : Application) : AndroidViewModel(app) {
                 curTask.burstTime--
                 if (curTask.burstTime == 0){
                     curTask = null
+                }
+            }else{
+                result_tasks.add(TaskModel("idle",runningTime,-1))
+            }
+            runningTime++
+        }
+        result_tasks.add(TaskModel("idle",runningTime,-1))
+    }
+
+    private fun rr(timeSlice : Int){
+        var runningTime = 0
+        var curTask : Task? = null
+        val taskQ = PriorityQueue<Task> { o1, o2 -> o1.arriveTime - o2.arriveTime }
+        val readyQ : Queue<Task> = LinkedList()
+        var count = 0
+        taskList.forEach { taskQ.add(it.copy())}
+        while (taskQ.isNotEmpty() || readyQ.isNotEmpty()||curTask != null){
+            while (taskQ.isNotEmpty() && taskQ.peek()!!.arriveTime <= runningTime){
+                readyQ.add(taskQ.poll())
+            }
+            if (curTask == null && readyQ.isNotEmpty()){
+                curTask = readyQ.poll()
+            }
+            if (curTask != null){
+                result_tasks.add(TaskModel(curTask.name,runningTime,curTask.idx))
+                curTask.burstTime--
+                count++
+                if (curTask.burstTime == 0){
+                    curTask = null
+                    count = 0
+                }else if (count == timeSlice){
+                    readyQ.add(curTask)
+                    curTask = null
+                    count = 0
                 }
             }else{
                 result_tasks.add(TaskModel("idle",runningTime,-1))
