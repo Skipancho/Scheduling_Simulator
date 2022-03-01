@@ -77,6 +77,7 @@ class MainViewModel(app : Application) : AndroidViewModel(app) {
             "FCFS"->fcfs()
             "SJF"-> sjf()
             "HRN"-> hrn()
+            "Priority"->priorityA()
             "RR"-> {
                 val timeS = timeSlice.value.toString()
                 if (timeS == "" || timeS.toInt() == 0){
@@ -101,6 +102,13 @@ class MainViewModel(app : Application) : AndroidViewModel(app) {
         val taskQ = PriorityQueue<Task> { o1, o2 -> o1.arriveTime - o2.arriveTime }
         val readyQ = PriorityQueue<Task> { o1, o2 -> o1.burstTime - o2.burstTime }
         scheduling(taskQ,readyQ)
+    }
+
+    private fun priorityA(){
+        //비선점형 우선순위 스케줄링
+        val taskQ = PriorityQueue<Task> { o1, o2 -> o1.arriveTime - o2.priority }
+        val readyQ = PriorityQueue<Task> { o1, o2 -> o2.priority - o1.priority }
+        scheduling(taskQ, readyQ)
     }
 
     private fun hrn(){
