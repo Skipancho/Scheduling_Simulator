@@ -6,4 +6,6 @@ data class Task(
     var burstTime : Int,
     val priority : Int,
     val idx : Int
-)
+){
+    val initial_burst = burstTime
+}

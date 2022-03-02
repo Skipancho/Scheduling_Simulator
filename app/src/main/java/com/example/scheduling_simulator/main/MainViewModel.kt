@@ -20,8 +20,12 @@ class MainViewModel(app : Application) : AndroidViewModel(app) {
     val algorithm = MutableLiveData("")
 
     val timeSlice = MutableLiveData("3")
+    val resultText = MutableLiveData("-")
 
     val result_tasks = mutableListOf<TaskModel>()
+
+    val waitingTimes = mutableListOf<Int>()
+    val responseTimes = mutableListOf<Int>()
 
     private var cnt = 0
 
@@ -71,13 +75,16 @@ class MainViewModel(app : Application) : AndroidViewModel(app) {
             return
         }
         result_tasks.clear()
+        waitingTimes.clear()
+        responseTimes.clear()
         navigator?.algorithmCheck()
         toast("${algorithm.value}")
         when(algorithm.value){
             "FCFS"->fcfs()
             "SJF"-> sjf()
             "HRN"-> hrn()
-            "Priority"->priorityA()
+            "Priority(비선점)"->priorityA()
+            "Priority(선점)"->priorityB()
             "RR"-> {
                 val timeS = timeSlice.value.toString()
                 if (timeS == "" || timeS.toInt() == 0){
@@ -106,9 +113,74 @@ class MainViewModel(app : Application) : AndroidViewModel(app) {
 
     private fun priorityA(){
         //비선점형 우선순위 스케줄링
-        val taskQ = PriorityQueue<Task> { o1, o2 -> o1.arriveTime - o2.priority }
+        val taskQ = PriorityQueue<Task> { o1, o2 -> o1.arriveTime - o2.arriveTime }
         val readyQ = PriorityQueue<Task> { o1, o2 -> o2.priority - o1.priority }
         scheduling(taskQ, readyQ)
+    }
+
+    private fun scheduling(taskQ : PriorityQueue<Task>,readyQ : PriorityQueue<Task>){
+        var curTask : Task? = null
+        var runningTime = 0
+        taskList.forEach { taskQ.add(it.copy())}
+        while (taskQ.isNotEmpty() || readyQ.isNotEmpty()||curTask != null){
+            while (taskQ.isNotEmpty() && taskQ.peek()!!.arriveTime <= runningTime){
+                readyQ.add(taskQ.poll())
+            }
+            if (curTask == null && readyQ.isNotEmpty()){
+                curTask = readyQ.poll()
+                responseTimes.add(runningTime - curTask!!.arriveTime)
+            }
+            if (curTask != null){
+                result_tasks.add(TaskModel(curTask.name,runningTime,curTask.idx))
+                curTask.burstTime--
+                if (curTask.burstTime == 0){
+                    waitingTimes.add(runningTime-curTask.initial_burst-curTask.arriveTime + 1)
+                    curTask = null
+                }
+            }else{
+                result_tasks.add(TaskModel("idle",runningTime,-1))
+            }
+            runningTime++
+        }
+        result_tasks.add(TaskModel("idle",runningTime,-1))
+        cal(runningTime)
+    }
+
+    private fun priorityB(){
+        //선점형 우선순위 스케줄링
+        val taskQ = PriorityQueue<Task> { o1, o2 -> o1.arriveTime - o2.arriveTime }
+        val readyQ = PriorityQueue<Task> { o1, o2 -> o2.priority - o1.priority }
+        var curTask : Task? = null
+        var runningTime = 0
+        taskList.forEach { taskQ.add(it.copy())}
+        while (taskQ.isNotEmpty() || readyQ.isNotEmpty()||curTask != null){
+            while (taskQ.isNotEmpty() && taskQ.peek()!!.arriveTime <= runningTime){
+                readyQ.add(taskQ.poll())
+            }
+            if (curTask == null && readyQ.isNotEmpty()){
+                curTask = readyQ.poll()
+                if (curTask!!.burstTime == curTask.initial_burst){
+                    responseTimes.add(runningTime - curTask.arriveTime)
+                }
+            }
+            if (curTask != null){
+                if (readyQ.isNotEmpty() && readyQ.peek()!!.priority > curTask.priority){
+                    readyQ.add(curTask)
+                    curTask = readyQ.poll()!!
+                }
+                result_tasks.add(TaskModel(curTask.name,runningTime,curTask.idx))
+                curTask.burstTime--
+                if (curTask.burstTime == 0){
+                    waitingTimes.add(runningTime-curTask.initial_burst-curTask.arriveTime + 1)
+                    curTask = null
+                }
+            }else{
+                result_tasks.add(TaskModel("idle",runningTime,-1))
+            }
+            runningTime++
+        }
+        result_tasks.add(TaskModel("idle",runningTime,-1))
+        cal(runningTime)
     }
 
     private fun hrn(){
@@ -136,11 +208,13 @@ class MainViewModel(app : Application) : AndroidViewModel(app) {
                 }
                 curTask = readyQ[0]
                 readyQ.removeAt(0)
+                responseTimes.add(runningTime - curTask.arriveTime)
             }
             if (curTask != null){
                 result_tasks.add(TaskModel(curTask.name,runningTime,curTask.idx))
                 curTask.burstTime--
                 if (curTask.burstTime == 0){
+                    waitingTimes.add(runningTime-curTask.initial_burst-curTask.arriveTime + 1)
                     curTask = null
                 }
             }else{
@@ -149,31 +223,7 @@ class MainViewModel(app : Application) : AndroidViewModel(app) {
             runningTime++
         }
         result_tasks.add(TaskModel("idle",runningTime,-1))
-    }
-
-    private fun scheduling(taskQ : PriorityQueue<Task>,readyQ : PriorityQueue<Task>){
-        var curTask : Task? = null
-        var runningTime = 0
-        taskList.forEach { taskQ.add(it.copy())}
-        while (taskQ.isNotEmpty() || readyQ.isNotEmpty()||curTask != null){
-            while (taskQ.isNotEmpty() && taskQ.peek()!!.arriveTime <= runningTime){
-                readyQ.add(taskQ.poll())
-            }
-            if (curTask == null && readyQ.isNotEmpty()){
-                curTask = readyQ.poll()
-            }
-            if (curTask != null){
-                result_tasks.add(TaskModel(curTask.name,runningTime,curTask.idx))
-                curTask.burstTime--
-                if (curTask.burstTime == 0){
-                    curTask = null
-                }
-            }else{
-                result_tasks.add(TaskModel("idle",runningTime,-1))
-            }
-            runningTime++
-        }
-        result_tasks.add(TaskModel("idle",runningTime,-1))
+        cal(runningTime)
     }
 
     private fun rr(timeSlice : Int){
@@ -189,12 +239,16 @@ class MainViewModel(app : Application) : AndroidViewModel(app) {
             }
             if (curTask == null && readyQ.isNotEmpty()){
                 curTask = readyQ.poll()
+                if (curTask!!.burstTime == curTask.initial_burst){
+                    responseTimes.add(runningTime - curTask.arriveTime)
+                }
             }
             if (curTask != null){
                 result_tasks.add(TaskModel(curTask.name,runningTime,curTask.idx))
                 curTask.burstTime--
                 count++
                 if (curTask.burstTime == 0){
+                    waitingTimes.add(runningTime-curTask.initial_burst-curTask.arriveTime + 1)
                     curTask = null
                     count = 0
                 }else if (count == timeSlice){
@@ -208,5 +262,16 @@ class MainViewModel(app : Application) : AndroidViewModel(app) {
             runningTime++
         }
         result_tasks.add(TaskModel("idle",runningTime,-1))
+        cal(runningTime)
+    }
+
+    private fun cal(runningTime : Int){
+        val waitingAvg = waitingTimes.average()
+        val responseAvg = responseTimes.average()
+        val turnaroundAvg : Double = (taskList.sumOf { it.initial_burst } + waitingTimes.sum())/taskList.size.toDouble()
+        resultText.value = "평균 대기시간 : $waitingAvg\n" +
+                "평균 응답시간 : $responseAvg\n" +
+                "평균 소요시간 : $turnaroundAvg\n" +
+                "전체 실행시간 : $runningTime"
     }
 }
