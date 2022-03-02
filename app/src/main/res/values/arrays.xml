@@ -4,7 +4,8 @@
         <item>FCFS</item>
         <item>SJF</item>
         <item>HRN</item>
-        <item>Priority</item>
+        <item>Priority(비선점)</item>
+        <item>Priority(선점)</item>
         <item>RR</item>
     </string-array>
 </resources>

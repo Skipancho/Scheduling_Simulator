@@ -77,7 +77,8 @@ class MainViewModel(app : Application) : AndroidViewModel(app) {
             "FCFS"->fcfs()
             "SJF"-> sjf()
             "HRN"-> hrn()
-            "Priority"->priorityA()
+            "Priority(비선점)"->priorityA()
+            "Priority(선점)"->priorityB()
             "RR"-> {
                 val timeS = timeSlice.value.toString()
                 if (timeS == "" || timeS.toInt() == 0){
@@ -106,9 +107,47 @@ class MainViewModel(app : Application) : AndroidViewModel(app) {
 
     private fun priorityA(){
         //비선점형 우선순위 스케줄링
-        val taskQ = PriorityQueue<Task> { o1, o2 -> o1.arriveTime - o2.priority }
+        val taskQ = PriorityQueue<Task> { o1, o2 -> o1.arriveTime - o2.arriveTime }
         val readyQ = PriorityQueue<Task> { o1, o2 -> o2.priority - o1.priority }
         scheduling(taskQ, readyQ)
+    }
+
+    private fun priorityB(){
+        //선점형 우선순위 스케줄링
+        val taskQ = PriorityQueue<Task> { o1, o2 -> o1.arriveTime - o2.arriveTime }
+        val readyQ = PriorityQueue<Task> { o1, o2 -> o2.priority - o1.priority }
+        var curTask : Task? = null
+        var runningTime = 0
+        taskList.forEach { taskQ.add(it.copy())}
+        while (taskQ.isNotEmpty() || readyQ.isNotEmpty()||curTask != null){
+            while (taskQ.isNotEmpty() && taskQ.peek()!!.arriveTime <= runningTime){
+                readyQ.add(taskQ.poll())
+            }
+            print("$runningTime : ")
+            readyQ.forEach {
+                print("${it.name}, ")
+            }
+            println()
+            if (curTask == null && readyQ.isNotEmpty()){
+                curTask = readyQ.poll()
+            }
+            if (curTask != null){
+                if (readyQ.isNotEmpty() && readyQ.peek()!!.priority > curTask.priority){
+                    readyQ.add(curTask)
+                    curTask = readyQ.poll()!!
+                }
+                result_tasks.add(TaskModel(curTask.name,runningTime,curTask.idx))
+                curTask.burstTime--
+                if (curTask.burstTime == 0){
+                    curTask = null
+                }
+            }else{
+                result_tasks.add(TaskModel("idle",runningTime,-1))
+            }
+            //println("${curTask?.name}$runningTime")
+            runningTime++
+        }
+        result_tasks.add(TaskModel("idle",runningTime,-1))
     }
 
     private fun hrn(){
