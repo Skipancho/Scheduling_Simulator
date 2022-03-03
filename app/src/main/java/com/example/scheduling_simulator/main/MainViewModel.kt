@@ -64,6 +64,7 @@ class MainViewModel(app : Application) : AndroidViewModel(app) {
         taskList.clear()
         result_tasks.clear()
         cnt = 0
+        resultText.value=""
         name.value="p0"
         navigator?.updateListView()
         navigator?.updateGraph()
